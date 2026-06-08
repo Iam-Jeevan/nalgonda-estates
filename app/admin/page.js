@@ -183,9 +183,6 @@ function ImageUploader({ images, onChange }) {
       Array.from(fileList).forEach((f) => fd.append('files', f));
 
       const headers = {};
-      if (process.env.NEXT_PUBLIC_ADMIN_API_SECRET) {
-        headers['x-admin-secret'] = process.env.NEXT_PUBLIC_ADMIN_API_SECRET;
-      }
 
       const res = await fetch('/api/upload', {
         method: 'POST',
@@ -282,8 +279,20 @@ export default function AdminPage() {
   const [form, setForm] = useState(emptyForm());
 
   useEffect(() => {
-    try { if (sessionStorage.getItem('admin:auth') === '1') setAuthed(true); } catch (e) {}
-  }, []);
+  const checkAuth = async () => {
+    try {
+      const res = await fetch('/api/admin/check');
+
+      if (res.ok) {
+        setAuthed(true);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  checkAuth();
+}, []);
 
 const handleLogin = async (e) => {
   e.preventDefault();
