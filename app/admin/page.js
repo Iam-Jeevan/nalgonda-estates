@@ -25,8 +25,6 @@ import { LOCATIONS, formatINR } from '@/lib/properties';
 import { translateText, translateToAll } from '@/lib/translate';
 import { toast } from 'sonner';
 
-const ADMIN_PASSWORD = 'nalgonda2025';
-
 function emptyForm() {
   return {
     type: 'agriculture',
@@ -287,15 +285,34 @@ export default function AdminPage() {
     try { if (sessionStorage.getItem('admin:auth') === '1') setAuthed(true); } catch (e) {}
   }, []);
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      setAuthed(true);
-      try { sessionStorage.setItem('admin:auth', '1'); } catch (e) {}
-    } else {
+const handleLogin = async (e) => {
+  e.preventDefault();
+
+  try {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        password,
+      }),
+    });
+
+    if (!res.ok) {
       toast.error(t('wrongPassword'));
+      return;
     }
-  };
+
+    setAuthed(true);
+
+    try {
+      sessionStorage.setItem('admin:auth', '1');
+    } catch {}
+  } catch (err) {
+    toast.error('Login failed');
+  }
+};
 
   const openNew = () => { setEditingId(null); setForm(emptyForm()); setOpen(true); };
   const openEdit = (p) => { setEditingId(p.id); setForm(recordToForm(p)); setOpen(true); };
