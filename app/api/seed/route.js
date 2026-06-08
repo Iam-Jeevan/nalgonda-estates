@@ -8,15 +8,32 @@ export const runtime = 'nodejs';
 
 // POST /api/seed  -> wipes the collection and re-loads SEED_PROPERTIES
 export async function POST(req) {
+  // Disable seeding in production
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      { error: 'Seed route disabled in production' },
+      { status: 403 }
+    );
+  }
+
   const unauthorized = requireAdmin(req);
   if (unauthorized) return unauthorized;
 
   await connectMongo();
+
   await Property.deleteMany({});
+
   const docs = SEED_PROPERTIES.map((p) => ({
     ...p,
-    images: (p.images || []).map((u) => ({ url: u, publicId: '' })),
+    images: (p.images || []).map((u) => ({
+      url: u,
+      publicId: '',
+    })),
   }));
+
   await Property.insertMany(docs);
-  return NextResponse.json({ inserted: docs.length });
+
+  return NextResponse.json({
+    inserted: docs.length,
+  });
 }
