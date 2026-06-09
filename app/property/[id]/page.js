@@ -79,14 +79,75 @@ export default function PropertyDetailsPage({ params }) {
   const onSMS = () => { window.location.href = `sms:${AGENT.phone}?body=${encodeURIComponent(getShareText() + '\n\n🔗 Link: ' + propertyUrl)}`; };
   const onWhats = () => { window.open(`https://wa.me/${AGENT.whatsapp}?text=${encodeURIComponent(getShareText() + '\n\n🔗 Link: ' + propertyUrl)}`, '_blank'); };
   
+  // Helper to get image as file for Web Share API
+  const downloadImageAsFile = async (imageUrl) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      return new File([blob], 'property.jpg', { type: 'image/jpeg' });
+    } catch (err) {
+      console.error('Failed to fetch image:', err);
+      return null;
+    }
+  };
+
   const onShare = async () => {
     const shareText = getShareText();
-    const shareData = { title, text: shareText, url: propertyUrl };
+    const imageUrl = imgs[idx] || imgs[0];
+    const fullText = `${shareText}\n\n🔗 Link: ${propertyUrl}`;
 
+    // 1. Median Native App
+    if (typeof window !== 'undefined' && window.median && window.median.share) {
+      if (window.median.share.downloadAndShare) {
+        // This forces the app to download the image file and attach it natively
+        window.median.share.downloadAndShare({ url: imageUrl, text: fullText });
+      } else {
+        // Fallback for older Median configurations
+        window.median.share.sharePage({ url: propertyUrl, text: shareText });
+      }
+      return;
+    }
+
+    // 2. Standard Web Share API (Mobile and Desktop Chrome/Safari)
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        const imageFile = await downloadImageAsFile(imageUrl);
+        const shareData = {
+          title: title,
+          text: shareText,
+          url: propertyUrl,
+        };
+
+        // If the browser supports file sharing, attach the image
+        if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
+          shareData.files = [imageFile];
+        }
+
+        await navigator.share(shareData);
+        return;
+      } catch (err) {
+        if (err?.name === 'AbortError') return;
+      }
+    }
+
+    // 3. Fallback to Clipboard
     try {
-      if (navigator.share) await navigator.share(shareData); 
-      else { await navigator.clipboard.writeText(`${shareText}\n\n🔗 Link: ${propertyUrl}`); toast.success('Link copied'); }
-    } catch (e) { console.log('Share canceled'); }
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(fullText);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = fullText;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      toast.success('Link copied to clipboard!');
+    } catch (e) {
+      toast.error('Failed to copy link');
+    }
   };
 
   return (
