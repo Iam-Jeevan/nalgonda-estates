@@ -22,10 +22,11 @@ function WhatsAppIcon({ className }) {
   );
 }
 
+// Glassmorphism update to FeatureCard
 function FeatureCard({ icon, label, value }) {
   return (
-    <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex flex-col justify-center transition-colors hover:bg-emerald-50/50 hover:border-emerald-100">
-      <div className="flex items-center gap-2 text-slate-500 mb-2">
+    <div className="bg-white/50 backdrop-blur-md border border-white/40 rounded-2xl p-4 flex flex-col justify-center transition-colors hover:bg-white/70 hover:border-emerald-200">
+      <div className="flex items-center gap-2 text-slate-600 mb-2">
         {icon}
         <span className="text-xs font-semibold uppercase tracking-wider">{label}</span>
       </div>
@@ -49,9 +50,9 @@ export default function PropertyDetailsPage({ params }) {
   
   if (!p) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-center px-4 bg-slate-50">
-        <h2 className="text-2xl font-bold text-slate-800 mb-4">Property Not Found</h2>
-        <Link href="/"><Button className="rounded-xl shadow-md">Return to Home</Button></Link>
+      <div className="min-h-screen flex flex-col items-center justify-center text-center px-4 bg-black/20 backdrop-blur-md">
+        <h2 className="text-2xl font-bold text-white mb-4 drop-shadow-md">Property Not Found</h2>
+        <Link href="/"><Button className="rounded-xl shadow-md bg-white text-slate-900 hover:bg-slate-100">Return to Home</Button></Link>
       </div>
     );
   }
@@ -79,22 +80,19 @@ export default function PropertyDetailsPage({ params }) {
 
   const onShare = async () => {
     const shareText = getShareText();
-    // Bundle the URL into the fallback string
     const fullText = `${shareText}\n\n🔗 Link: ${propertyUrl}`;
 
-    // 1. Median Native App
     if (typeof window !== 'undefined' && window.median && window.median.share) {
       window.median.share.sharePage({ url: propertyUrl, text: shareText });
       return;
     }
 
-    // 2. Standard Web Share API (Mobile and Desktop Chrome/Safari)
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share({
           title: title,
           text: shareText,
-          url: propertyUrl, // PASSING URL forces OS to recognize it as a Link Share
+          url: propertyUrl,
         });
         return;
       } catch (err) {
@@ -102,7 +100,6 @@ export default function PropertyDetailsPage({ params }) {
       }
     }
 
-    // 3. Fallback to Clipboard
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(fullText);
@@ -123,25 +120,26 @@ export default function PropertyDetailsPage({ params }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 sm:py-8 pb-28">
+    // Removed solid background (bg-slate-50) from root container
+    <div className="min-h-screen sm:py-8 pb-28">
       
-      {/* Main Container */}
-      <main className="max-w-4xl mx-auto bg-white sm:rounded-[2rem] sm:shadow-2xl overflow-hidden relative">
+      {/* Main Container - Added glassmorphism classes */}
+      <main className="max-w-4xl mx-auto bg-white/85 backdrop-blur-2xl sm:rounded-[2rem] sm:shadow-[0_20px_60px_rgba(0,0,0,0.3)] border border-white/20 overflow-hidden relative">
         
         {/* Top Navigation Bar */}
         <div className="absolute top-0 left-0 right-0 p-4 z-20 flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent">
           <Link href="/">
-            <Button variant="ghost" size="icon" className="bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur-md border border-white/30 transition-all">
+            <Button variant="ghost" size="icon" className="bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur-md border border-white/30 transition-all shadow-md">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
-          <Button variant="ghost" size="icon" onClick={() => toggle(p.id)} className="bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur-md border border-white/30 transition-all">
+          <Button variant="ghost" size="icon" onClick={() => toggle(p.id)} className="bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur-md border border-white/30 transition-all shadow-md">
             <Heart className={`w-5 h-5 ${isBookmarked ? 'fill-red-500 text-red-500' : ''}`} />
           </Button>
         </div>
 
         {/* Hero Image Section */}
-        <div className="relative w-full h-[40vh] sm:h-[55vh] bg-slate-100 group cursor-pointer" onClick={() => setIsFullScreen(true)}>
+        <div className="relative w-full h-[40vh] sm:h-[55vh] bg-black/20 group cursor-pointer" onClick={() => setIsFullScreen(true)}>
           <img src={imgs[idx]} alt={title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
 
@@ -157,30 +155,30 @@ export default function PropertyDetailsPage({ params }) {
 
           {imgs.length > 1 && (
             <>
-              <button onClick={(e) => { e.stopPropagation(); setIdx((idx - 1 + imgs.length) % imgs.length); }} className="absolute left-4 sm:left-10 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full p-3 backdrop-blur-sm transition opacity-0 group-hover:opacity-100"><ChevronLeft className="w-6 h-6" /></button>
-              <button onClick={(e) => { e.stopPropagation(); setIdx((idx + 1) % imgs.length); }} className="absolute right-4 sm:right-10 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full p-3 backdrop-blur-sm transition opacity-0 group-hover:opacity-100"><ChevronRight className="w-6 h-6" /></button>
+              <button onClick={(e) => { e.stopPropagation(); setIdx((idx - 1 + imgs.length) % imgs.length); }} className="absolute left-4 sm:left-10 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full p-3 backdrop-blur-sm transition opacity-0 group-hover:opacity-100 shadow-lg border border-white/10"><ChevronLeft className="w-6 h-6" /></button>
+              <button onClick={(e) => { e.stopPropagation(); setIdx((idx + 1) % imgs.length); }} className="absolute right-4 sm:right-10 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full p-3 backdrop-blur-sm transition opacity-0 group-hover:opacity-100 shadow-lg border border-white/10"><ChevronRight className="w-6 h-6" /></button>
             </>
           )}
         </div>
 
         {/* Content Section */}
         <div className="p-6 sm:p-10">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-100 pb-8 mb-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-300/50 pb-8 mb-8">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-4">
-                <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-100 rounded-md px-2.5 py-1">
+                <Badge variant="secondary" className="bg-emerald-100/80 backdrop-blur-sm text-emerald-800 border-emerald-200 rounded-md px-2.5 py-1">
                   {p.type === 'agriculture' && <><Sprout className="w-3.5 h-3.5 mr-1" />{t('agriculture')}</>}
                   {p.type === 'plot' && <><LandPlot className="w-3.5 h-3.5 mr-1" />{t('plot')}</>}
                   {p.type === 'house' && <><Home className="w-3.5 h-3.5 mr-1" />{t('house')}</>}
                 </Badge>
-                <span className="text-slate-500 font-medium text-sm flex items-center"><MapPin className="w-4 h-4 mr-1 text-slate-400" /> {localityLabel}, {p.location}</span>
+                <span className="text-slate-600 font-medium text-sm flex items-center"><MapPin className="w-4 h-4 mr-1 text-slate-500" /> {localityLabel}, {p.location}</span>
               </div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">{title}</h1>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight drop-shadow-sm">{title}</h1>
             </div>
             
             <div className="md:text-right bg-emerald-50/50 md:bg-transparent p-4 md:p-0 rounded-2xl border md:border-none border-emerald-100">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Asking Price</p>
-              <div className="text-4xl font-extrabold text-emerald-600 tracking-tight">{formatINR(p.totalPrice)}</div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Asking Price</p>
+              <div className="text-4xl font-extrabold text-emerald-700 tracking-tight drop-shadow-sm">{formatINR(p.totalPrice)}</div>
             </div>
           </div>
 
@@ -210,29 +208,30 @@ export default function PropertyDetailsPage({ params }) {
           {desc && (
             <div className="mb-10">
               <h2 className="text-xl font-bold text-slate-900 mb-4">Description</h2>
-              <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed bg-slate-50 p-6 rounded-3xl border border-slate-100 whitespace-pre-wrap">
+              {/* Glass description box */}
+              <div className="prose prose-slate max-w-none text-slate-800 font-medium leading-relaxed bg-white/40 backdrop-blur-lg p-6 rounded-3xl border border-white/50 whitespace-pre-wrap shadow-inner">
                 {desc}
               </div>
             </div>
           )}
         </div>
 
-        {/* Action Bar */}
-        <div className="fixed bottom-0 left-0 right-0 sm:relative sm:bottom-auto bg-white/90 sm:bg-slate-50 backdrop-blur-xl sm:backdrop-blur-none border-t sm:border-t-0 p-4 sm:p-6 sm:px-10 z-40 sm:rounded-b-[2rem]">
+        {/* Action Bar - Glassmorphism Update */}
+        <div className="fixed bottom-0 left-0 right-0 sm:relative sm:bottom-auto bg-white/80 sm:bg-transparent backdrop-blur-xl border-t border-white/30 sm:border-t-0 p-4 sm:p-6 sm:px-10 z-40 sm:rounded-b-[2rem]">
           <div className="flex gap-2 sm:gap-4 max-w-4xl mx-auto">
-            <Button onClick={onCall} className="flex-1 bg-green-600 hover:bg-green-700 text-white h-14 rounded-2xl shadow-[0_8px_16px_rgba(22,163,74,0.2)] transition-all hover:-translate-y-0.5">
+            <Button onClick={onCall} className="flex-1 bg-green-600 hover:bg-green-700 text-white h-14 rounded-2xl shadow-[0_8px_16px_rgba(22,163,74,0.2)] transition-all hover:-translate-y-0.5 border border-green-500">
               <Phone className="w-5 h-5 mr-2" />
               <span className="font-semibold text-base">{t('call')}</span>
             </Button>
-            <Button onClick={onSMS} variant="outline" className="flex-1 border-blue-200 text-blue-700 hover:bg-blue-50 h-14 rounded-2xl transition-all hover:-translate-y-0.5 bg-white">
+            <Button onClick={onSMS} variant="outline" className="flex-1 border-blue-200/50 text-blue-800 hover:bg-blue-50/80 h-14 rounded-2xl transition-all hover:-translate-y-0.5 bg-white/60 backdrop-blur-md shadow-sm">
               <MessageSquare className="w-5 h-5 mr-2" />
               <span className="font-semibold text-base hidden sm:inline">{t('sms')}</span>
             </Button>
-            <Button onClick={onWhats} variant="outline" className="flex-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 h-14 rounded-2xl transition-all hover:-translate-y-0.5 bg-white">
+            <Button onClick={onWhats} variant="outline" className="flex-1 border-emerald-200/50 text-emerald-800 hover:bg-emerald-50/80 h-14 rounded-2xl transition-all hover:-translate-y-0.5 bg-white/60 backdrop-blur-md shadow-sm">
               <WhatsAppIcon className="w-5 h-5 sm:mr-2" />
               <span className="font-semibold text-base hidden sm:inline">{t('whatsapp')}</span>
             </Button>
-            <Button onClick={onShare} variant="outline" className="flex-1 border-purple-200 text-purple-700 hover:bg-purple-50 h-14 rounded-2xl transition-all hover:-translate-y-0.5 bg-white">
+            <Button onClick={onShare} variant="outline" className="flex-1 border-purple-200/50 text-purple-800 hover:bg-purple-50/80 h-14 rounded-2xl transition-all hover:-translate-y-0.5 bg-white/60 backdrop-blur-md shadow-sm">
               <Share2 className="w-5 h-5 sm:mr-2" />
               <span className="font-semibold text-base hidden sm:inline">{t('share')}</span>
             </Button>
@@ -256,8 +255,8 @@ export default function PropertyDetailsPage({ params }) {
           
           {imgs.length > 1 && (
             <>
-              <button onClick={(e) => { e.stopPropagation(); setIdx((idx - 1 + imgs.length) % imgs.length); }} className="absolute left-4 sm:left-10 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-4 transition-colors"><ChevronLeft className="w-8 h-8" /></button>
-              <button onClick={(e) => { e.stopPropagation(); setIdx((idx + 1) % imgs.length); }} className="absolute right-4 sm:right-10 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-4 transition-colors"><ChevronRight className="w-8 h-8" /></button>
+              <button onClick={(e) => { e.stopPropagation(); setIdx((idx - 1 + imgs.length) % imgs.length); }} className="absolute left-4 sm:left-10 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-4 transition-colors backdrop-blur-md border border-white/10"><ChevronLeft className="w-8 h-8" /></button>
+              <button onClick={(e) => { e.stopPropagation(); setIdx((idx + 1) % imgs.length); }} className="absolute right-4 sm:right-10 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-4 transition-colors backdrop-blur-md border border-white/10"><ChevronRight className="w-8 h-8" /></button>
               <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 bg-black/50 px-5 py-3 rounded-full border border-white/10 backdrop-blur-md">
                 {imgs.map((_, i) => (
                   <button key={i} onClick={(e) => { e.stopPropagation(); setIdx(i); }} className={`h-2.5 rounded-full transition-all ${i === idx ? 'bg-white w-8' : 'bg-white/40 w-2.5 hover:bg-white/80'}`} />
