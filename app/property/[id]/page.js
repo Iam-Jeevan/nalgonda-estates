@@ -17,7 +17,7 @@ export async function generateMetadata({ params }) {
     const property = await Property.findOne({ id: id }).lean();
 
     if (property) {
-      // 1. Safely extract Title (Fix for [object Object])
+      // 1. Safely extract Title (Fixes the [object Object] bug)
       let propTitle = 'Premium Property';
       if (typeof property.title === 'string' && property.title.trim() !== '') {
         propTitle = property.title;
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }) {
       }
       title = `${propTitle} | Nalgonda Estates`;
       
-      // 2. Safely extract Description (Fix for [object Object])
+      // 2. Safely extract Description (Fixes the [object Object] bug)
       if (typeof property.description === 'string' && property.description.trim() !== '') {
         desc = property.description;
       } else if (property.description && typeof property.description.en === 'string' && property.description.en.trim() !== '') {
