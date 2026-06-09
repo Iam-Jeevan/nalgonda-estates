@@ -67,19 +67,12 @@ function PropertyCard({ p, saved, onToggleSave }) {
 
   const onSMS = () => { window.location.href = `sms:${AGENT.phone}?body=${encodeURIComponent(getShareText() + '\n\n🔗 Link: ' + getDynamicLink())}`; };
   
+  // WhatsApp: Send "I'm interested" message to AGENT
   const onWhats = () => { 
-    const imageUrl = p.images && p.images.length > 0 ? p.images[0] : '';
-    const shareText = getShareText();
-    const link = getDynamicLink();
-    
-    if (imageUrl) {
-      // Share with image
-      window.open(`https://wa.me/${AGENT.whatsapp}?text=${encodeURIComponent(shareText + '\n\n' + link)}`, '_blank');
-    } else {
-      window.open(`https://wa.me/${AGENT.whatsapp}?text=${encodeURIComponent(shareText + '\n\n' + link)}`, '_blank');
-    }
+    const interestedMsg = `Hi! I'm interested in this property:\n\n${getShareText()}\n\n🔗 ${getDynamicLink()}\n\nPlease send me more details.`;
+    window.open(`https://wa.me/${AGENT.whatsapp}?text=${encodeURIComponent(interestedMsg)}`, '_blank');
   };
-  
+
   const copyToClipboard = async (text) => {
     try {
       if (navigator.clipboard && window.isSecureContext) {
@@ -102,93 +95,16 @@ function PropertyCard({ p, saved, onToggleSave }) {
     }
   };
 
-  const createShareImage = () => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 1080;
-      canvas.height = 1350;
-      const ctx = canvas.getContext('2d');
-
-      const imageUrl = p.images && p.images.length > 0 
-        ? p.images[0] 
-        : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200';
-
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-
-      img.onload = () => {
-        // Draw image (scaled to fit top portion)
-        ctx.drawImage(img, 0, 0, 1080, 800);
-
-        // Add semi-transparent overlay
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.fillRect(0, 800, 1080, 550);
-
-        // Title
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 40px Arial';
-        ctx.textAlign = 'left';
-        const titleText = title.substring(0, 35);
-        ctx.fillText(titleText, 40, 880);
-
-        // Location
-        ctx.font = '28px Arial';
-        ctx.fillStyle = '#90EE90';
-        const locationText = `📍 ${localityLabel}, ${p.location}`.substring(0, 40);
-        ctx.fillText(locationText, 40, 940);
-
-        // Area
-        let areaText = '';
-        if (p.type === 'agriculture') areaText = `${p.areaAcres || 0} acres`;
-        else if (p.type === 'plot') areaText = `${p.areaSqYards || 0} sq.yd`;
-        else if (p.type === 'house') areaText = `${p.plotArea || 0} sq.yd plot / ${p.builtUpArea || 0} sqft`;
-
-        ctx.fillStyle = '#87CEEB';
-        ctx.fillText(`📐 Area: ${areaText}`, 40, 1000);
-
-        // Cost
-        ctx.fillStyle = '#FFD700';
-        ctx.font = 'bold 44px Arial';
-        ctx.fillText(`💰 ${formatINR(p.totalPrice)}`, 40, 1070);
-
-        // Link
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = '18px Arial';
-        const linkText = getDynamicLink().substring(0, 50) + '...';
-        ctx.fillText(linkText, 40, 1140);
-
-        // Company name
-        ctx.fillStyle = '#00FF00';
-        ctx.font = '20px Arial';
-        ctx.fillText('🏠 Nalgonda Estates', 40, 1200);
-
-        canvas.toBlob((blob) => {
-          const url = URL.createObjectURL(blob);
-          resolve(url);
-        }, 'image/jpeg', 0.85);
-      };
-
-      img.onerror = () => {
-        resolve(null);
-      };
-
-      img.src = imageUrl;
-    });
-  };
-
   const onShare = async (e) => {
     if (e) e.preventDefault();
 
     const propertyUrl = getDynamicLink();
     const shareText = getShareText();
 
-    // Try to create and share image
     try {
-      const imageUrl = await createShareImage();
-      
-      if (imageUrl && navigator.share) {
+      // Try native share API first (mobile)
+      if (navigator.share) {
         try {
-          // Try native share with image URL
           await navigator.share({
             title: title,
             text: shareText,
@@ -196,13 +112,14 @@ function PropertyCard({ p, saved, onToggleSave }) {
           });
           return;
         } catch (err) {
+          // User cancelled or share failed - fall back to copy
           if (err?.name !== 'AbortError') {
             console.warn('Share error:', err);
           }
         }
       }
     } catch (err) {
-      console.warn('Image creation error:', err);
+      console.warn('Share error:', err);
     }
 
     // Fallback: Copy to clipboard
