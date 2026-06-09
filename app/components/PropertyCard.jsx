@@ -96,29 +96,51 @@ function PropertyCard({ p, saved, onToggleSave }) {
 
     const propertyUrl = getDynamicLink();
     const shareText = getShareText();
-    const fullShareContent = `${shareText}\n\n🔗 Link: ${propertyUrl}`;
 
-    // Check if Web Share API is available (mostly on mobile)
-    if (navigator.share) {
+    // For mobile - try to share with image
+    if (typeof navigator !== 'undefined' && navigator.share) {
       try {
-        await navigator.share({
-          title: title,
-          text: shareText,
-          url: propertyUrl,
-        });
-        // Successfully shared, no need to do anything else
-        return;
-      } catch (err) {
-        // User cancelled the share dialog - AbortError
-        if (err?.name === 'AbortError') {
+        // Get the first image from the property
+        const imageUrl = p.images && p.images.length > 0 
+          ? p.images[0] 
+          : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200';
+
+        // Try to fetch and convert image to blob for sharing
+        try {
+          const response = await fetch(imageUrl);
+          const blob = await response.blob();
+          const file = new File([blob], 'property.jpg', { type: blob.type });
+
+          // Share with image file
+          await navigator.share({
+            title: title,
+            text: shareText,
+            url: propertyUrl,
+            files: [file],
+          });
+          console.log('Successfully shared with image via Web Share API');
+          return;
+        } catch (imgErr) {
+          // If image sharing fails, fall back to text-only share
+          console.warn('Image sharing failed, trying text-only share:', imgErr);
+          await navigator.share({
+            title: title,
+            text: shareText,
+            url: propertyUrl,
+          });
           return;
         }
-        // For other errors, fall back to clipboard
-        console.warn('Web Share API failed:', err);
+      } catch (err) {
+        if (err?.name === 'AbortError') {
+          console.log('User cancelled share dialog');
+          return;
+        }
+        console.warn('Web Share API error:', err?.name, err?.message);
       }
     }
 
     // Fallback: Copy to clipboard (for desktop or unsupported browsers)
+    const fullShareContent = `${shareText}\n\n🔗 Link: ${propertyUrl}`;
     await copyToClipboard(fullShareContent);
   };
 
