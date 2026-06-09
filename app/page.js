@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 function WhatsAppIcon({ className }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-      <path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.667 5.455l-.999 3.648 3.821-1.802zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/>
+      <path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 [...]
     </svg>
   );
 }
@@ -35,8 +35,8 @@ function Carousel({ images, alt }) {
       <img src={imgs[idx]} alt={alt} className="w-full h-full object-cover transition-opacity duration-300" loading="lazy" />
       {imgs.length > 1 && (
         <>
-          <button aria-label="prev" onClick={prev} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/85 hover:bg-white rounded-full p-1 shadow opacity-0 group-hover:opacity-100 transition"><ChevronLeft className="w-4 h-4 text-black" /></button>
-          <button aria-label="next" onClick={next} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/85 hover:bg-white rounded-full p-1 shadow opacity-0 group-hover:opacity-100 transition"><ChevronRight className="w-4 h-4 text-black" /></button>
+          <button aria-label="prev" onClick={prev} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/85 hover:bg-white rounded-full p-1 shadow opacity-0 group-hover:opacity-100 transiti[...]
+          <button aria-label="next" onClick={next} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/85 hover:bg-white rounded-full p-1 shadow opacity-0 group-hover:opacity-100 transit[...]
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none">
             {imgs.map((_, i) => (<span key={i} className={`w-1.5 h-1.5 rounded-full ${i===idx?'bg-white':'bg-white/50'}`} />))}
           </div>
@@ -65,58 +65,92 @@ function PropertyCard({ p, saved, onToggleSave }) {
 
   const getDynamicLink = () => typeof window !== 'undefined' ? `${window.location.origin}/property/${p.id}` : '';
 
-  const onSMS = () => { window.location.href = `sms:${AGENT.phone}?body=${encodeURIComponent(getShareText() + '\n\n🔗 Link: ' + getDynamicLink())}`; };
-  const onWhats = () => { window.open(`https://wa.me/${AGENT.whatsapp}?text=${encodeURIComponent(getShareText() + '\n\n🔗 Link: ' + getDynamicLink())}`, '_blank'); };
-  
+  const onSMS = () => { 
+    const message = `Hi, I'm interested in this property: ${title}\n\nI'd like to know more information and discuss further. Can we connect?\n\n${getShareText()}\n\n🔗 Link: ${getDynamicLink()}`
+    window.location.href = `sms:${AGENT.phone}?body=${encodeURIComponent(message)}`; 
+  };
+
+  const onWhats = () => { 
+    const message = `Hi! 👋\n\nI'm interested in buying this property and would like to know more details:\n\n${getShareText()}\n\nPlease contact me at your earliest convenience.\n\n🔗 Property Link: ${getDynamicLink()}`;
+    window.open(`https://wa.me/${AGENT.whatsapp}?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
+  const copyToClipboard = async (text) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        toast.success('Link copied to clipboard!');
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        toast.success('Link copied to clipboard!');
+      }
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      toast.error('Failed to copy link');
+    }
+  };
+
+  const getPropertyImage = () => {
+    if (p.images && p.images.length > 0) {
+      return p.images[0];
+    }
+    return 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200';
+  };
+
+  const downloadImageAsFile = async (imageUrl) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      return new File([blob], 'property.jpg', { type: 'image/jpeg' });
+    } catch (err) {
+      console.error('Failed to fetch image:', err);
+      return null;
+    }
+  };
+
   const onShare = async (e) => {
     if (e) e.preventDefault();
 
     const propertyUrl = getDynamicLink();
     const shareText = getShareText();
+    const imageUrl = getPropertyImage();
+    const fullText = `${shareText}\n\n🔗 Link: ${propertyUrl}`;
 
-    try {
-      // Mobile native share sheet
-      if (
-        navigator.share &&
-        (!navigator.canShare ||
-          navigator.canShare({
-            url: propertyUrl,
-          }))
-      ) {
-        await navigator.share({
-          title,
+    // Try native share with image (Mobile and Desktop)
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        const imageFile = await downloadImageAsFile(imageUrl);
+        
+        const shareData = {
+          title: title,
           text: shareText,
           url: propertyUrl,
-        });
+        };
+
+        // Add files if available and supported
+        if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
+          shareData.files = [imageFile];
+        }
+
+        await navigator.share(shareData);
         return;
-      }
-    } catch (err) {
-      // User cancelled share dialog
-      if (err?.name === 'AbortError') {
-        return;
+      } catch (err) {
+        if (err?.name === 'AbortError') {
+          return;
+        }
+        // Fall through to fallback on other errors
       }
     }
 
-    // Fallback for unsupported browsers - copy to clipboard
-    try {
-      await navigator.clipboard.writeText(
-        `${shareText}\n\n${propertyUrl}`
-      );
-      toast.success('Link copied to clipboard!');
-    } catch {
-      // Legacy copy fallback
-      const textArea = document.createElement('textarea');
-      textArea.value = `${shareText}\n\n${propertyUrl}`;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-9999px';
-
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-
-      toast.success('Link copied to clipboard!');
-    }
+    // Fallback: Copy to clipboard
+    await copyToClipboard(fullText);
   };
 
   return (
@@ -129,7 +163,7 @@ function PropertyCard({ p, saved, onToggleSave }) {
           {p.hotDeal && <Badge className="bg-orange-500 text-white border-0 shadow text-[10px] px-1.5 py-0"><Flame className="w-2.5 h-2.5 mr-1" />{t('featured')}</Badge>}
           {p.sold && <Badge className="bg-red-600 text-white border-0 shadow text-[10px] px-1.5 py-0">{t('sold')}</Badge>}
         </div>
-        <button onClick={(e) => { e.preventDefault(); onToggleSave(p.id); }} className="absolute top-2 right-2 bg-white/95 hover:bg-white rounded-full p-1.5 shadow-md transition z-10" aria-label="save">
+        <button onClick={(e) => { e.preventDefault(); onToggleSave(p.id); }} className="absolute top-2 right-2 bg-white/95 hover:bg-white rounded-full p-1.5 shadow-md transition z-10" aria-label="Save">
           <Heart className={`w-4 h-4 ${saved ? 'fill-red-500 text-red-500' : 'text-slate-400'}`} />
         </button>
         <div className="absolute bottom-2 left-2 pointer-events-none">
@@ -180,10 +214,10 @@ function PropertyCard({ p, saved, onToggleSave }) {
 
         {/* Sticky action footer */}
         <div className="grid grid-cols-4 gap-1.5 pt-1 mt-auto bg-white">
-          <Button onClick={onCall} variant="outline" className="flex flex-col h-auto py-1.5 px-0 border-green-200 bg-white hover:bg-green-50 hover:border-green-400"><Phone className="w-4 h-4 text-green-700" /><span className="text-[9px] mt-1 text-slate-700">{t('call')}</span></Button>
-          <Button onClick={onSMS} variant="outline" className="flex flex-col h-auto py-1.5 px-0 border-blue-200 bg-white hover:bg-blue-50 hover:border-blue-400"><MessageSquare className="w-4 h-4 text-blue-700" /><span className="text-[9px] mt-1 text-slate-700">{t('sms')}</span></Button>
-          <Button onClick={onWhats} variant="outline" className="flex flex-col h-auto py-1.5 px-0 border-emerald-200 bg-white hover:bg-emerald-50 hover:border-emerald-400"><WhatsAppIcon className="w-4 h-4 text-emerald-600" /><span className="text-[9px] mt-1 text-slate-700">{t('whatsapp')}</span></Button>
-          <Button onClick={onShare} variant="outline" className="flex flex-col h-auto py-1.5 px-0 border-purple-200 bg-white hover:bg-purple-50 hover:border-purple-400"><Share2 className="w-4 h-4 text-purple-700" /><span className="text-[9px] mt-1 text-slate-700">{t('share')}</span></Button>
+          <Button onClick={onCall} variant="outline" className="flex flex-col h-auto py-1.5 px-0 border-green-200 bg-white hover:bg-green-50 hover:border-green-400"><Phone className="w-4 h-4 text-green-700" /><span className="text-[10px] mt-0.5 font-medium text-green-700">Call</span></Button>
+          <Button onClick={onSMS} variant="outline" className="flex flex-col h-auto py-1.5 px-0 border-blue-200 bg-white hover:bg-blue-50 hover:border-blue-400"><MessageSquare className="w-4 h-4 text-blue-700" /><span className="text-[10px] mt-0.5 font-medium text-blue-700">SMS</span></Button>
+          <Button onClick={onWhats} variant="outline" className="flex flex-col h-auto py-1.5 px-0 border-emerald-200 bg-white hover:bg-emerald-50 hover:border-emerald-400"><WhatsAppIcon className="w-4 h-4 text-emerald-600" /><span className="text-[10px] mt-0.5 font-medium text-emerald-700">WhatsApp</span></Button>
+          <Button onClick={onShare} variant="outline" className="flex flex-col h-auto py-1.5 px-0 border-purple-200 bg-white hover:bg-purple-50 hover:border-purple-400"><Share2 className="w-4 h-4 text-purple-700" /><span className="text-[10px] mt-0.5 font-medium text-purple-700">Share</span></Button>
         </div>
       </div>
     </Card>
@@ -312,7 +346,7 @@ export default function HomePage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button variant="outline" onClick={() => { setLocation('Nalgonda'); setType('all'); setSort('newest'); setSearch(''); }} className="w-full text-slate-900"><X className="w-4 h-4 mr-2" />{t('clearFilters')}</Button>
+                  <Button variant="outline" onClick={() => { setLocation('Nalgonda'); setType('all'); setSort('newest'); setSearch(''); }} className="w-full text-slate-900"><X className="w-4 h-4 mr-1" />{t('clearFilters')}</Button>
                 </div>
               </SheetContent>
             </Sheet>
@@ -330,14 +364,14 @@ export default function HomePage() {
               <Tabs value={type} onValueChange={setType} className="w-full sm:w-auto">
                 <TabsList className="bg-black/40 backdrop-blur-sm p-1 h-10 grid grid-cols-4 w-full sm:flex sm:w-auto rounded-lg border border-white/10 shadow-inner">
                   <TabsTrigger value="all" className="px-3 data-[state=active]:bg-white data-[state=active]:text-black text-white/90 rounded-md text-xs sm:text-sm">{t('all')}</TabsTrigger>
-                  <TabsTrigger value="agriculture" className="px-2 data-[state=active]:bg-white data-[state=active]:text-black text-white/90 text-xs sm:text-sm rounded-md"><Sprout className="w-3.5 h-3.5 mr-1" />{t('agriculture')}</TabsTrigger>
-                  <TabsTrigger value="plot" className="px-2 data-[state=active]:bg-white data-[state=active]:text-black text-white/90 text-xs sm:text-sm rounded-md"><LandPlot className="w-3.5 h-3.5 mr-1" />{t('plot')}</TabsTrigger>
-                  <TabsTrigger value="house" className="px-2 data-[state=active]:bg-white data-[state=active]:text-black text-white/90 text-xs sm:text-sm rounded-md"><Home className="w-3.5 h-3.5 mr-1" />{t('house')}</TabsTrigger>
+                  <TabsTrigger value="agriculture" className="px-2 data-[state=active]:bg-white data-[state=active]:text-black text-white/90 text-xs sm:text-sm rounded-md"><Sprout className="w-3.5 h-3.5 mr-1" /></TabsTrigger>
+                  <TabsTrigger value="plot" className="px-2 data-[state=active]:bg-white data-[state=active]:text-black text-white/90 text-xs sm:text-sm rounded-md"><LandPlot className="w-3.5 h-3.5 mr-1" /></TabsTrigger>
+                  <TabsTrigger value="house" className="px-2 data-[state=active]:bg-white data-[state=active]:text-black text-white/90 text-xs sm:text-sm rounded-md"><Home className="w-3.5 h-3.5 mr-1" /></TabsTrigger>
                 </TabsList>
               </Tabs>
 
               <div className="flex items-center gap-2">
-                <Button variant={showSaved ? 'default' : 'outline'} onClick={() => setShowSaved(!showSaved)} className="h-9 px-3 bg-white text-slate-900 text-xs shadow-sm border-0 hover:bg-slate-50">
+                <Button variant={showSaved ? 'default' : 'outline'} onClick={() => setShowSaved(!showSaved)} className="h-9 px-3 bg-white text-slate-900 text-xs shadow-sm border-0 hover:bg-slate-100">
                   <Heart className={`w-3.5 h-3.5 mr-1 ${showSaved ? 'fill-current text-red-500' : ''}`} />{showSaved ? t('savedListings') : t('saved')} ({saved.length})
                 </Button>
                 <Select value={location} onValueChange={setLocation}>
