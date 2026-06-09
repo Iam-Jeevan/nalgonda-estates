@@ -22,7 +22,6 @@ function WhatsAppIcon({ className }) {
   );
 }
 
-// Reusable modern component for property metrics
 function FeatureCard({ icon, label, value }) {
   return (
     <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex flex-col justify-center transition-colors hover:bg-emerald-50/50 hover:border-emerald-100">
@@ -63,67 +62,39 @@ export default function PropertyDetailsPage({ params }) {
   const imgs = p.images && p.images.length > 0 ? p.images : ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200'];
   const isBookmarked = isSaved(p.id);
 
-  // Sharing Logic - FIXED EMOJIS
   const getShareText = () => {
     let areaText = '';
     if (p.type === 'agriculture') areaText = `${p.areaAcres || 0} acres`;
     else if (p.type === 'plot') areaText = `${p.areaSqYards || 0} sq.yd`;
     else if (p.type === 'house') areaText = `${p.plotArea || 0} sq.yd plot / ${p.builtUpArea || 0} sqft`;
 
-    return `*${title}*\n📍 Place: ${localityLabel}, ${p.location}\n📐 Area: ${areaText}\n💰 Cost: ${formatINR(p.totalPrice)}`;
+    return `*${title}*\n桃 Place: ${localityLabel}, ${p.location}\n盗 Area: ${areaText}\n腸 Cost: ${formatINR(p.totalPrice)}`;
   };
 
   const propertyUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   const onCall = () => { window.location.href = `tel:${AGENT.phone}`; };
-  const onSMS = () => { window.location.href = `sms:${AGENT.phone}?body=${encodeURIComponent(getShareText() + '\n\n🔗 Link: ' + propertyUrl)}`; };
-  const onWhats = () => { window.open(`https://wa.me/${AGENT.whatsapp}?text=${encodeURIComponent(getShareText() + '\n\n🔗 Link: ' + propertyUrl)}`, '_blank'); };
-  
-  // Helper to get image as file for Web Share API
-  const downloadImageAsFile = async (imageUrl) => {
-    try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      return new File([blob], 'property.jpg', { type: 'image/jpeg' });
-    } catch (err) {
-      console.error('Failed to fetch image:', err);
-      return null;
-    }
-  };
+  const onSMS = () => { window.location.href = `sms:${AGENT.phone}?body=${encodeURIComponent(getShareText() + '\n\n迫 Link: ' + propertyUrl)}`; };
+  const onWhats = () => { window.open(`https://wa.me/${AGENT.whatsapp}?text=${encodeURIComponent(getShareText() + '\n\n迫 Link: ' + propertyUrl)}`, '_blank'); };
 
   const onShare = async () => {
     const shareText = getShareText();
-    const imageUrl = imgs[idx] || imgs[0];
-    const fullText = `${shareText}\n\n🔗 Link: ${propertyUrl}`;
+    const fullText = `${shareText}\n\n迫 Link: ${propertyUrl}`;
 
     // 1. Median Native App
     if (typeof window !== 'undefined' && window.median && window.median.share) {
-      if (window.median.share.downloadAndShare) {
-        // This forces the app to download the image file and attach it natively
-        window.median.share.downloadAndShare({ url: imageUrl, text: fullText });
-      } else {
-        // Fallback for older Median configurations
-        window.median.share.sharePage({ url: propertyUrl, text: shareText });
-      }
+      window.median.share.sharePage({ url: propertyUrl, text: shareText });
       return;
     }
 
     // 2. Standard Web Share API (Mobile and Desktop Chrome/Safari)
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
-        const imageFile = await downloadImageAsFile(imageUrl);
-        const shareData = {
+        await navigator.share({
           title: title,
           text: shareText,
           url: propertyUrl,
-        };
-
-        // If the browser supports file sharing, attach the image
-        if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
-          shareData.files = [imageFile];
-        }
-
-        await navigator.share(shareData);
+        });
         return;
       } catch (err) {
         if (err?.name === 'AbortError') return;
