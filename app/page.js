@@ -97,30 +97,11 @@ function PropertyCard({ p, saved, onToggleSave }) {
     }
   };
 
-  const getPropertyImage = () => {
-    if (p.images && p.images.length > 0) {
-      return p.images[0];
-    }
-    return 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200';
-  };
-
-  const downloadImageAsFile = async (imageUrl) => {
-    try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      return new File([blob], 'property.jpg', { type: 'image/jpeg' });
-    } catch (err) {
-      console.error('Failed to fetch image:', err);
-      return null;
-    }
-  };
-
   const onShare = async (e) => {
     if (e) e.preventDefault();
 
     const propertyUrl = getDynamicLink();
     const shareText = getShareText();
-    const imageUrl = getPropertyImage();
     const fullText = `${shareText}\n\n🔗 Link: ${propertyUrl}`;
 
     // 1. Check if running inside Median.co Native App
@@ -129,36 +110,26 @@ function PropertyCard({ p, saved, onToggleSave }) {
         url: propertyUrl,
         text: shareText
       });
-      return; // Exit function so it doesn't trigger the web fallback
+      return; 
     }
 
-    // 2. Try native web share with image (Mobile/Desktop Browsers)
+    // 2. Try native web share (Mobile/Desktop Browsers) - ONLY TEXT AND URL
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
-        const imageFile = await downloadImageAsFile(imageUrl);
-        
-        const shareData = {
+        await navigator.share({
           title: title,
           text: shareText,
           url: propertyUrl,
-        };
-
-        // Add files if available and supported
-        if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
-          shareData.files = [imageFile];
-        }
-
-        await navigator.share(shareData);
+        });
         return;
       } catch (err) {
         if (err?.name === 'AbortError') {
           return;
         }
-        // Fall through to fallback on other errors
       }
     }
 
-    // 3. Fallback: Copy to clipboard (For browsers that don't support sharing)
+    // 3. Fallback: Copy to clipboard
     await copyToClipboard(fullText);
   };
 
