@@ -65,12 +65,14 @@ function PropertyCard({ p, saved, onToggleSave }) {
 
   const getDynamicLink = () => typeof window !== 'undefined' ? `${window.location.origin}/property/${p.id}` : '';
 
-  const onSMS = () => { window.location.href = `sms:${AGENT.phone}?body=${encodeURIComponent(getShareText() + '\n\n🔗 Link: ' + getDynamicLink())}`; };
-  
-  // WhatsApp: Send "I'm interested" message to AGENT
+  const onSMS = () => { 
+    const message = `Hi, I'm interested in this property: ${title}\n\nI'd like to know more information and discuss further. Can we connect?\n\n${getShareText()}\n\n🔗 Link: ${getDynamicLink()}`;
+    window.location.href = `sms:${AGENT.phone}?body=${encodeURIComponent(message)}`; 
+  };
+
   const onWhats = () => { 
-    const interestedMsg = `Hi! I'm interested in this property:\n\n${getShareText()}\n\n🔗 ${getDynamicLink()}\n\nPlease send me more details.`;
-    window.open(`https://wa.me/${AGENT.whatsapp}?text=${encodeURIComponent(interestedMsg)}`, '_blank');
+    const message = `Hi! 👋\n\nI'm interested in buying this property and would like to know more details:\n\n${getShareText()}\n\nPlease contact me at your earliest convenience.\n\n🔗 Property Link: ${getDynamicLink()}`;
+    window.open(`https://wa.me/${AGENT.whatsapp}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   const copyToClipboard = async (text) => {
@@ -100,31 +102,27 @@ function PropertyCard({ p, saved, onToggleSave }) {
 
     const propertyUrl = getDynamicLink();
     const shareText = getShareText();
+    const fullText = `${shareText}\n\n🔗 Link: ${propertyUrl}`;
 
-    try {
-      // Try native share API first (mobile)
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: title,
-            text: shareText,
-            url: propertyUrl,
-          });
+    // Try native share first (Desktop and Mobile)
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: title,
+          text: shareText,
+          url: propertyUrl,
+        });
+        return;
+      } catch (err) {
+        if (err?.name === 'AbortError') {
           return;
-        } catch (err) {
-          // User cancelled or share failed - fall back to copy
-          if (err?.name !== 'AbortError') {
-            console.warn('Share error:', err);
-          }
         }
+        // Fall through to clipboard copy on other errors
       }
-    } catch (err) {
-      console.warn('Share error:', err);
     }
 
     // Fallback: Copy to clipboard
-    const fullShareContent = `${shareText}\n\n🔗 Link: ${propertyUrl}`;
-    await copyToClipboard(fullShareContent);
+    await copyToClipboard(fullText);
   };
 
   return (
