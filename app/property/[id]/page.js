@@ -4,42 +4,57 @@ import { connectMongo } from '@/lib/mongodb';
 import Property from '@/models/Property';
 
 export async function generateMetadata({ params }) {
-  // 1. Await params for Next.js 15+ compatibility
   const resolvedParams = await params;
   const id = resolvedParams?.id;
   
-  // 2. Default fallback values
+  // Default fallback values
   let title = "Nalgonda Estates — Premium Land, Plots & Homes";
   let desc = "Hyper-local real estate listings in and around Nalgonda.";
   let imageUrl = "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200";
 
-  // 3. Connect directly to MongoDB to fetch the specific property
   try {
     await connectMongo();
-    
-    // Find the property where the 'id' field matches the URL parameter
     const property = await Property.findOne({ id: id }).lean();
 
     if (property) {
-      // Safely extract Title (handling i18n objects if present)
-      const propTitle = property.title?.en || property.title || 'Premium Property';
+      // 1. Safely extract Title (Fix for [object Object])
+      let propTitle = 'Premium Property';
+      if (typeof property.title === 'string' && property.title.trim() !== '') {
+        propTitle = property.title;
+      } else if (property.title && typeof property.title.en === 'string') {
+        propTitle = property.title.en;
+      }
       title = `${propTitle} | Nalgonda Estates`;
       
-      // Safely extract Description
-      desc = property.description?.en || property.description || desc;
+      // 2. Safely extract Description (Fix for [object Object])
+      if (typeof property.description === 'string' && property.description.trim() !== '') {
+        desc = property.description;
+      } else if (property.description && typeof property.description.en === 'string' && property.description.en.trim() !== '') {
+        desc = property.description.en;
+      }
       
-      // Safely extract the first Image URL based on your normalizeImages logic
-      if (property.images && property.images.length > 0) {
+      // 3. Safely extract Image URL
+      if (property.images && Array.isArray(property.images) && property.images.length > 0) {
         const firstImg = property.images[0];
-        // Checks if the image is stored as a simple string or an object with a 'url' property
-        imageUrl = typeof firstImg === 'string' ? firstImg : (firstImg?.url || imageUrl);
+        let parsedImgUrl = '';
+        
+        // Handle both string arrays and object arrays from your database
+        if (typeof firstImg === 'string') {
+          parsedImgUrl = firstImg;
+        } else if (firstImg && typeof firstImg.url === 'string') {
+          parsedImgUrl = firstImg.url;
+        }
+
+        // Ensure the image URL is absolute (required by WhatsApp)
+        if (parsedImgUrl && parsedImgUrl.startsWith('http')) {
+          imageUrl = parsedImgUrl;
+        }
       }
     }
   } catch (error) {
     console.error("Error fetching property for metadata:", error);
   }
 
-  // 4. Return the generated Open Graph Tags
   return {
     title: title,
     description: desc,
