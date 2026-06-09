@@ -74,7 +74,6 @@ function PropertyCard({ p, saved, onToggleSave }) {
         await navigator.clipboard.writeText(text);
         toast.success('Link copied to clipboard!');
       } else {
-        // Fallback for insecure contexts or older browsers
         const textArea = document.createElement('textarea');
         textArea.value = text;
         textArea.style.position = 'fixed';
@@ -91,6 +90,73 @@ function PropertyCard({ p, saved, onToggleSave }) {
     }
   };
 
+  const createShareImage = async () => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1080;
+      const ctx = canvas.getContext('2d');
+
+      // Load and draw the property image
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      const imageUrl = p.images && p.images.length > 0 
+        ? p.images[0] 
+        : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200';
+
+      img.onload = () => {
+        // Draw image as background
+        ctx.drawImage(img, 0, 0, 1080, 1080);
+
+        // Add semi-transparent overlay at bottom
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 700, 1080, 380);
+
+        // Set text styles
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 32px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(title.substring(0, 30), 30, 770);
+
+        // Location
+        ctx.font = '24px Arial';
+        ctx.fillStyle = '#90EE90';
+        ctx.fillText(`📍 ${localityLabel}, ${p.location}`, 30, 820);
+
+        // Area
+        let areaText = '';
+        if (p.type === 'agriculture') areaText = `${p.areaAcres || 0} acres`;
+        else if (p.type === 'plot') areaText = `${p.areaSqYards || 0} sq.yd`;
+        else if (p.type === 'house') areaText = `${p.plotArea || 0} sq.yd`;
+
+        ctx.fillStyle = '#87CEEB';
+        ctx.fillText(`📐 Area: ${areaText}`, 30, 870);
+
+        // Cost
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 32px Arial';
+        ctx.fillText(`💰 ${formatINR(p.totalPrice)}`, 30, 930);
+
+        // Link at bottom
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '20px Arial';
+        const link = getDynamicLink();
+        ctx.fillText(link.substring(0, 40), 30, 990);
+
+        canvas.toBlob((blob) => {
+          resolve(blob);
+        }, 'image/jpeg', 0.9);
+      };
+
+      img.onerror = () => {
+        resolve(null);
+      };
+
+      img.src = imageUrl;
+    });
+  };
+
   const onShare = async (e) => {
     if (e) e.preventDefault();
 
@@ -100,46 +166,44 @@ function PropertyCard({ p, saved, onToggleSave }) {
     // For mobile - try to share with image
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
-        // Get the first image from the property
-        const imageUrl = p.images && p.images.length > 0 
-          ? p.images[0] 
-          : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200';
+        console.log('Attempting to create share image...');
+        const imageBlob = await createShareImage();
 
-        // Try to fetch and convert image to blob for sharing
-        try {
-          const response = await fetch(imageUrl);
-          const blob = await response.blob();
-          const file = new File([blob], 'property.jpg', { type: blob.type });
-
-          // Share with image file
-          await navigator.share({
-            title: title,
-            text: shareText,
-            url: propertyUrl,
-            files: [file],
-          });
-          console.log('Successfully shared with image via Web Share API');
-          return;
-        } catch (imgErr) {
-          // If image sharing fails, fall back to text-only share
-          console.warn('Image sharing failed, trying text-only share:', imgErr);
-          await navigator.share({
-            title: title,
-            text: shareText,
-            url: propertyUrl,
-          });
-          return;
+        if (imageBlob) {
+          try {
+            const file = new File([imageBlob], 'property.jpg', { type: 'image/jpeg' });
+            
+            await navigator.share({
+              title: title,
+              text: shareText,
+              url: propertyUrl,
+              files: [file],
+            });
+            console.log('Successfully shared with image');
+            return;
+          } catch (imgErr) {
+            console.warn('Image share failed:', imgErr?.message);
+          }
         }
+
+        // Fallback: text-only share
+        await navigator.share({
+          title: title,
+          text: shareText,
+          url: propertyUrl,
+        });
+        console.log('Shared as text-only');
+        return;
       } catch (err) {
         if (err?.name === 'AbortError') {
-          console.log('User cancelled share dialog');
+          console.log('User cancelled share');
           return;
         }
-        console.warn('Web Share API error:', err?.name, err?.message);
+        console.warn('Share error:', err?.message);
       }
     }
 
-    // Fallback: Copy to clipboard (for desktop or unsupported browsers)
+    // Desktop fallback
     const fullShareContent = `${shareText}\n\n🔗 Link: ${propertyUrl}`;
     await copyToClipboard(fullShareContent);
   };
