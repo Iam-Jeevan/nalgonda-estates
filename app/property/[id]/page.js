@@ -1,36 +1,64 @@
 // app/property/[id]/page.js
 import PropertyClient from './PropertyClient';
 
-// 1. You must fetch the specific property data on the server side
-// Replace this with however you actually fetch data from your database/API
+// 1. Hook up your server-side data source here
 async function getPropertyDataOnServer(id) {
-  // Example:
-  // const res = await fetch(`https://your-api.com/properties/${id}`);
-  // return res.json();
-  
-  // If you are using a static file for data, import it directly here.
-  return null; 
+  try {
+    // OPTION A: If you have an API endpoint that returns a single property, uncomment below:
+    // const res = await fetch(`https://nalgonda-estates.vercel.app/api/properties/${id}`);
+    // if (res.ok) return await res.json();
+
+    // OPTION B: If your properties are imported from a static array file, you can filter it here:
+    // import { staticProperties } from '@/lib/properties';
+    // return staticProperties.find(p => p.id === id);
+
+    return null; 
+  } catch (error) {
+    console.error("Error fetching property on server:", error);
+    return null;
+  }
 }
 
 export async function generateMetadata({ params }) {
   const property = await getPropertyDataOnServer(params.id);
 
+  // SMART FALLBACK: If the server hasn't fetched the property data yet, 
+  // do not show "Property Not Found". Show your main site branding and image instead.
   if (!property) {
-    return { title: 'Property Not Found' };
+    return {
+      title: 'Nalgonda Estates — Premium Land, Plots & Homes',
+      description: 'Hyper-local real estate listings in and around Nalgonda.',
+      openGraph: {
+        title: 'Nalgonda Estates — Premium Land, Plots & Homes',
+        description: 'Hyper-local real estate listings in and around Nalgonda.',
+        url: `https://nalgonda-estates.vercel.app/property/${params.id}`,
+        siteName: 'Nalgonda Estates',
+        images: [
+          {
+            url: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200', // Your main showcase house image
+            width: 1200,
+            height: 630,
+            alt: 'Nalgonda Estates',
+          },
+        ],
+        type: 'website',
+      },
+    };
   }
 
-  const title = property.title?.en || 'Nalgonda Estates Property';
-  const desc = property.description?.en || 'View details for this premium property.';
-  
-  // 2. The image URL MUST be an absolute URL (starting with https://)
+  // Dynamic Metadata if the server successfully finds the property
+  const title = property.title?.en || 'Premium Property';
+  const desc = property.description?.en || 'View details for this premium listing.';
   const imageUrl = property.images?.[0] || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200';
 
   return {
-    title: title,
+    title: `${title} | Nalgonda Estates`,
     description: desc,
     openGraph: {
       title: title,
       description: desc,
+      url: `https://nalgonda-estates.vercel.app/property/${params.id}`,
+      siteName: 'Nalgonda Estates',
       images: [
         {
           url: imageUrl,
@@ -45,6 +73,6 @@ export async function generateMetadata({ params }) {
 }
 
 export default function Page({ params }) {
-  // Pass the params down to your existing interactive client component
+  // Pass control over to your client-side file which correctly handles the actual page view
   return <PropertyClient params={params} />;
 }
