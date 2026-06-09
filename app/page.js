@@ -69,36 +69,57 @@ function PropertyCard({ p, saved, onToggleSave }) {
   const onWhats = () => { window.open(`https://wa.me/${AGENT.whatsapp}?text=${encodeURIComponent(getShareText() + '\n\n🔗 Link: ' + getDynamicLink())}`, '_blank'); };
   
   const onShare = async (e) => {
-    if (e) e.preventDefault();
-    const propertyUrl = getDynamicLink();
-    const shareText = getShareText();
-    const shareData = { title: title, text: shareText, url: propertyUrl };
-    const fallbackText = `${shareText}\n\n🔗 Link: ${propertyUrl}`;
+  if (e) e.preventDefault();
 
-    // Bulletproof legacy copy fallback for mobile browsers
-    const executeLegacyCopy = (textToCopy) => {
-      try {
-        const textArea = document.createElement("textarea");
-        textArea.value = textToCopy;
-        // Move element out of view completely to prevent scrolling
-        textArea.style.position = "fixed";
-        textArea.style.left = "-999999px";
-        textArea.style.top = "-999999px";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        const successful = document.execCommand('copy');
-        document.body.removeChild(textArea);
-        
-        if (successful) {
-          toast.success('Link copied to clipboard!');
-        } else {
-          toast.error('Failed to share link.');
-        }
-      } catch (err) {
-        toast.error('Failed to share link.');
-      }
-    };
+  const propertyUrl = getDynamicLink();
+  const shareText = getShareText();
+
+  try {
+    // Mobile native share sheet
+    if (
+  navigator.share &&
+  (!navigator.canShare ||
+    navigator.canShare({
+      url: propertyUrl,
+    }))
+) {
+  await navigator.share({
+    title,
+    text: shareText,
+    url: propertyUrl,
+  });
+  return;
+}
+  } catch (err) {
+    // User cancelled share dialog
+    if (err?.name === 'AbortError') {
+      return;
+    }
+  }
+
+  // Fallback for unsupported browsers
+  try {
+    await navigator.clipboard.writeText(
+      `${shareText}\n\n${propertyUrl}`
+    );
+
+    toast.success('Link copied to clipboard!');
+  } catch {
+    const textArea = document.createElement('textarea');
+    textArea.value = `${shareText}\n\n${propertyUrl}`;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-9999px';
+
+    document.body.appendChild(textArea);
+    textArea.select();
+
+    document.execCommand('copy');
+
+    document.body.removeChild(textArea);
+
+    toast.success('Link copied to clipboard!');
+  }
+};
 
     // Attempt modern copy API
     const fallbackCopy = () => {
