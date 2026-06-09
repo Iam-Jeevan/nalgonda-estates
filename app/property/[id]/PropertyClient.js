@@ -68,19 +68,19 @@ export default function PropertyDetailsPage({ params }) {
     else if (p.type === 'plot') areaText = `${p.areaSqYards || 0} sq.yd`;
     else if (p.type === 'house') areaText = `${p.plotArea || 0} sq.yd plot / ${p.builtUpArea || 0} sqft`;
 
-    return `*${title}*\n桃 Place: ${localityLabel}, ${p.location}\n盗 Area: ${areaText}\n腸 Cost: ${formatINR(p.totalPrice)}`;
+    return `*${title}*\n📍 Place: ${localityLabel}, ${p.location}\n📐 Area: ${areaText}\n💰 Cost: ${formatINR(p.totalPrice)}`;
   };
 
   const propertyUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   const onCall = () => { window.location.href = `tel:${AGENT.phone}`; };
-  const onSMS = () => { window.location.href = `sms:${AGENT.phone}?body=${encodeURIComponent(getShareText() + '\n\n迫 Link: ' + propertyUrl)}`; };
-  const onWhats = () => { window.open(`https://wa.me/${AGENT.whatsapp}?text=${encodeURIComponent(getShareText() + '\n\n迫 Link: ' + propertyUrl)}`, '_blank'); };
+  const onSMS = () => { window.location.href = `sms:${AGENT.phone}?body=${encodeURIComponent(getShareText() + '\n\n🔗 Link: ' + propertyUrl)}`; };
+  const onWhats = () => { window.open(`https://wa.me/${AGENT.whatsapp}?text=${encodeURIComponent(getShareText() + '\n\n🔗 Link: ' + propertyUrl)}`, '_blank'); };
 
   const onShare = async () => {
     const shareText = getShareText();
     // Bundle the URL into the fallback string
-    const fullText = `${shareText}\n\n迫 Link: ${propertyUrl}`;
+    const fullText = `${shareText}\n\n🔗 Link: ${propertyUrl}`;
 
     // 1. Median Native App
     if (typeof window !== 'undefined' && window.median && window.median.share) {
