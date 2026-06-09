@@ -123,7 +123,16 @@ function PropertyCard({ p, saved, onToggleSave }) {
     const imageUrl = getPropertyImage();
     const fullText = `${shareText}\n\n🔗 Link: ${propertyUrl}`;
 
-    // Try native share with image (Mobile and Desktop)
+    // 1. Check if running inside Median.co Native App
+    if (typeof window !== 'undefined' && window.median && window.median.share) {
+      window.median.share.sharePage({
+        url: propertyUrl,
+        text: shareText
+      });
+      return; // Exit function so it doesn't trigger the web fallback
+    }
+
+    // 2. Try native web share with image (Mobile/Desktop Browsers)
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         const imageFile = await downloadImageAsFile(imageUrl);
@@ -149,7 +158,7 @@ function PropertyCard({ p, saved, onToggleSave }) {
       }
     }
 
-    // Fallback: Copy to clipboard
+    // 3. Fallback: Copy to clipboard (For browsers that don't support sharing)
     await copyToClipboard(fullText);
   };
 
