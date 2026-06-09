@@ -68,19 +68,19 @@ export default function PropertyDetailsPage({ params }) {
     else if (p.type === 'plot') areaText = `${p.areaSqYards || 0} sq.yd`;
     else if (p.type === 'house') areaText = `${p.plotArea || 0} sq.yd plot / ${p.builtUpArea || 0} sqft`;
 
-    return `*${title}*\n📍 Place: ${localityLabel}, ${p.location}\n📐 Area: ${areaText}\n💰 Cost: ${formatINR(p.totalPrice)}`;
+    return `*${title}*\n桃 Place: ${localityLabel}, ${p.location}\n盗 Area: ${areaText}\n腸 Cost: ${formatINR(p.totalPrice)}`;
   };
 
   const propertyUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   const onCall = () => { window.location.href = `tel:${AGENT.phone}`; };
-  const onSMS = () => { window.location.href = `sms:${AGENT.phone}?body=${encodeURIComponent(getShareText() + '\n\n🔗 Link: ' + propertyUrl)}`; };
-  const onWhats = () => { window.open(`https://wa.me/${AGENT.whatsapp}?text=${encodeURIComponent(getShareText() + '\n\n🔗 Link: ' + propertyUrl)}`, '_blank'); };
+  const onSMS = () => { window.location.href = `sms:${AGENT.phone}?body=${encodeURIComponent(getShareText() + '\n\n迫 Link: ' + propertyUrl)}`; };
+  const onWhats = () => { window.open(`https://wa.me/${AGENT.whatsapp}?text=${encodeURIComponent(getShareText() + '\n\n迫 Link: ' + propertyUrl)}`, '_blank'); };
 
   const onShare = async () => {
     const shareText = getShareText();
-    // Bundle the URL directly into the text body
-    const fullText = `${shareText}\n\n🔗 Link: ${propertyUrl}`;
+    // Bundle the URL into the fallback string
+    const fullText = `${shareText}\n\n迫 Link: ${propertyUrl}`;
 
     // 1. Median Native App
     if (typeof window !== 'undefined' && window.median && window.median.share) {
@@ -88,13 +88,13 @@ export default function PropertyDetailsPage({ params }) {
       return;
     }
 
-    // 2. Standard Web Share API
+    // 2. Standard Web Share API (Mobile and Desktop Chrome/Safari)
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share({
           title: title,
-          text: fullText, 
-          // OMITTING 'url' parameter so WhatsApp doesn't discard the text block
+          text: shareText,
+          url: propertyUrl, // PASSING URL forces OS to recognize it as a Link Share
         });
         return;
       } catch (err) {
@@ -157,8 +157,8 @@ export default function PropertyDetailsPage({ params }) {
 
           {imgs.length > 1 && (
             <>
-              <button onClick={(e) => { e.stopPropagation(); setIdx((idx - 1 + imgs.length) % imgs.length); }} className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full p-3 backdrop-blur-sm transition opacity-0 group-hover:opacity-100"><ChevronLeft className="w-6 h-6" /></button>
-              <button onClick={(e) => { e.stopPropagation(); setIdx((idx + 1) % imgs.length); }} className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full p-3 backdrop-blur-sm transition opacity-0 group-hover:opacity-100"><ChevronRight className="w-6 h-6" /></button>
+              <button onClick={(e) => { e.stopPropagation(); setIdx((idx - 1 + imgs.length) % imgs.length); }} className="absolute left-4 sm:left-10 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full p-3 backdrop-blur-sm transition opacity-0 group-hover:opacity-100"><ChevronLeft className="w-6 h-6" /></button>
+              <button onClick={(e) => { e.stopPropagation(); setIdx((idx + 1) % imgs.length); }} className="absolute right-4 sm:right-10 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full p-3 backdrop-blur-sm transition opacity-0 group-hover:opacity-100"><ChevronRight className="w-6 h-6" /></button>
             </>
           )}
         </div>
