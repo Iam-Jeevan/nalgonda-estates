@@ -68,18 +68,19 @@ export default function PropertyDetailsPage({ params }) {
     else if (p.type === 'plot') areaText = `${p.areaSqYards || 0} sq.yd`;
     else if (p.type === 'house') areaText = `${p.plotArea || 0} sq.yd plot / ${p.builtUpArea || 0} sqft`;
 
-    return `*${title}*\n桃 Place: ${localityLabel}, ${p.location}\n盗 Area: ${areaText}\n腸 Cost: ${formatINR(p.totalPrice)}`;
+    return `*${title}*\n📍 Place: ${localityLabel}, ${p.location}\n📐 Area: ${areaText}\n💰 Cost: ${formatINR(p.totalPrice)}`;
   };
 
   const propertyUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   const onCall = () => { window.location.href = `tel:${AGENT.phone}`; };
-  const onSMS = () => { window.location.href = `sms:${AGENT.phone}?body=${encodeURIComponent(getShareText() + '\n\n迫 Link: ' + propertyUrl)}`; };
-  const onWhats = () => { window.open(`https://wa.me/${AGENT.whatsapp}?text=${encodeURIComponent(getShareText() + '\n\n迫 Link: ' + propertyUrl)}`, '_blank'); };
+  const onSMS = () => { window.location.href = `sms:${AGENT.phone}?body=${encodeURIComponent(getShareText() + '\n\n🔗 Link: ' + propertyUrl)}`; };
+  const onWhats = () => { window.open(`https://wa.me/${AGENT.whatsapp}?text=${encodeURIComponent(getShareText() + '\n\n🔗 Link: ' + propertyUrl)}`, '_blank'); };
 
   const onShare = async () => {
     const shareText = getShareText();
-    const fullText = `${shareText}\n\n迫 Link: ${propertyUrl}`;
+    // Bundle the URL directly into the text body
+    const fullText = `${shareText}\n\n🔗 Link: ${propertyUrl}`;
 
     // 1. Median Native App
     if (typeof window !== 'undefined' && window.median && window.median.share) {
@@ -87,13 +88,13 @@ export default function PropertyDetailsPage({ params }) {
       return;
     }
 
-    // 2. Standard Web Share API (Mobile and Desktop Chrome/Safari)
+    // 2. Standard Web Share API
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share({
           title: title,
-          text: shareText,
-          url: propertyUrl,
+          text: fullText, 
+          // OMITTING 'url' parameter so WhatsApp doesn't discard the text block
         });
         return;
       } catch (err) {
@@ -127,7 +128,7 @@ export default function PropertyDetailsPage({ params }) {
       {/* Main Container */}
       <main className="max-w-4xl mx-auto bg-white sm:rounded-[2rem] sm:shadow-2xl overflow-hidden relative">
         
-        {/* Top Navigation Bar - Overlaps the image seamlessly */}
+        {/* Top Navigation Bar */}
         <div className="absolute top-0 left-0 right-0 p-4 z-20 flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent">
           <Link href="/">
             <Button variant="ghost" size="icon" className="bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur-md border border-white/30 transition-all">
@@ -139,10 +140,9 @@ export default function PropertyDetailsPage({ params }) {
           </Button>
         </div>
 
-        {/* Hero Image Section - Edge to Edge */}
+        {/* Hero Image Section */}
         <div className="relative w-full h-[40vh] sm:h-[55vh] bg-slate-100 group cursor-pointer" onClick={() => setIsFullScreen(true)}>
           <img src={imgs[idx]} alt={title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-          
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
 
           {/* Badges */}
@@ -151,28 +151,20 @@ export default function PropertyDetailsPage({ params }) {
             {p.sold && <Badge className="bg-red-600 hover:bg-red-700 text-white border-0 shadow-lg text-sm px-3 py-1.5 rounded-lg">{t('sold')}</Badge>}
           </div>
 
-          {/* View Gallery Button */}
           <div className="absolute bottom-6 right-6 bg-black/40 hover:bg-black/60 transition-colors backdrop-blur-md text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 shadow-lg border border-white/20">
             <Maximize2 className="w-4 h-4" /> View Gallery ({idx + 1}/{imgs.length})
           </div>
 
-          {/* Image Navigation (if multiple) */}
           {imgs.length > 1 && (
             <>
-              <button onClick={(e) => { e.stopPropagation(); setIdx((idx - 1 + imgs.length) % imgs.length); }} className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full p-3 backdrop-blur-sm transition opacity-0 group-hover:opacity-100">
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-              <button onClick={(e) => { e.stopPropagation(); setIdx((idx + 1) % imgs.length); }} className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full p-3 backdrop-blur-sm transition opacity-0 group-hover:opacity-100">
-                <ChevronRight className="w-6 h-6" />
-              </button>
+              <button onClick={(e) => { e.stopPropagation(); setIdx((idx - 1 + imgs.length) % imgs.length); }} className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full p-3 backdrop-blur-sm transition opacity-0 group-hover:opacity-100"><ChevronLeft className="w-6 h-6" /></button>
+              <button onClick={(e) => { e.stopPropagation(); setIdx((idx + 1) % imgs.length); }} className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/50 text-white rounded-full p-3 backdrop-blur-sm transition opacity-0 group-hover:opacity-100"><ChevronRight className="w-6 h-6" /></button>
             </>
           )}
         </div>
 
         {/* Content Section */}
         <div className="p-6 sm:p-10">
-          
-          {/* Header & Price */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-100 pb-8 mb-8">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-4">
@@ -192,7 +184,6 @@ export default function PropertyDetailsPage({ params }) {
             </div>
           </div>
 
-          {/* Key Features Grid */}
           <h2 className="text-xl font-bold text-slate-900 mb-5 flex items-center gap-2">Property Overview</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
             {p.type === 'agriculture' && (
@@ -216,7 +207,6 @@ export default function PropertyDetailsPage({ params }) {
             )}
           </div>
 
-          {/* Description */}
           {desc && (
             <div className="mb-10">
               <h2 className="text-xl font-bold text-slate-900 mb-4">Description</h2>
@@ -225,10 +215,9 @@ export default function PropertyDetailsPage({ params }) {
               </div>
             </div>
           )}
-
         </div>
 
-        {/* Action Bar - Desktop & Mobile */}
+        {/* Action Bar */}
         <div className="fixed bottom-0 left-0 right-0 sm:relative sm:bottom-auto bg-white/90 sm:bg-slate-50 backdrop-blur-xl sm:backdrop-blur-none border-t sm:border-t-0 p-4 sm:p-6 sm:px-10 z-40 sm:rounded-b-[2rem]">
           <div className="flex gap-2 sm:gap-4 max-w-4xl mx-auto">
             <Button onClick={onCall} className="flex-1 bg-green-600 hover:bg-green-700 text-white h-14 rounded-2xl shadow-[0_8px_16px_rgba(22,163,74,0.2)] transition-all hover:-translate-y-0.5">
@@ -249,7 +238,6 @@ export default function PropertyDetailsPage({ params }) {
             </Button>
           </div>
         </div>
-
       </main>
 
       {/* Full Screen Image Viewer Modal */}
@@ -268,34 +256,17 @@ export default function PropertyDetailsPage({ params }) {
           
           {imgs.length > 1 && (
             <>
-              <button 
-                onClick={(e) => { e.stopPropagation(); setIdx((idx - 1 + imgs.length) % imgs.length); }} 
-                className="absolute left-4 sm:left-10 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-4 transition-colors"
-              >
-                <ChevronLeft className="w-8 h-8" />
-              </button>
-              
-              <button 
-                onClick={(e) => { e.stopPropagation(); setIdx((idx + 1) % imgs.length); }} 
-                className="absolute right-4 sm:right-10 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-4 transition-colors"
-              >
-                <ChevronRight className="w-8 h-8" />
-              </button>
-              
+              <button onClick={(e) => { e.stopPropagation(); setIdx((idx - 1 + imgs.length) % imgs.length); }} className="absolute left-4 sm:left-10 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-4 transition-colors"><ChevronLeft className="w-8 h-8" /></button>
+              <button onClick={(e) => { e.stopPropagation(); setIdx((idx + 1) % imgs.length); }} className="absolute right-4 sm:right-10 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-4 transition-colors"><ChevronRight className="w-8 h-8" /></button>
               <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 bg-black/50 px-5 py-3 rounded-full border border-white/10 backdrop-blur-md">
                 {imgs.map((_, i) => (
-                  <button 
-                    key={i} 
-                    onClick={(e) => { e.stopPropagation(); setIdx(i); }} 
-                    className={`h-2.5 rounded-full transition-all ${i === idx ? 'bg-white w-8' : 'bg-white/40 w-2.5 hover:bg-white/80'}`} 
-                  />
+                  <button key={i} onClick={(e) => { e.stopPropagation(); setIdx(i); }} className={`h-2.5 rounded-full transition-all ${i === idx ? 'bg-white w-8' : 'bg-white/40 w-2.5 hover:bg-white/80'}`} />
                 ))}
               </div>
             </>
           )}
         </div>
       )}
-
     </div>
   );
 }
