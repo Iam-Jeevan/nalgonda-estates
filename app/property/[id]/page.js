@@ -4,31 +4,23 @@ import PropertyClient from './PropertyClient';
 export async function generateMetadata({ params }) {
   const { id } = params;
   
-  // 1. Set default fallback values so the link never looks "broken"
+  // 1. Default fallback values
   let title = "Nalgonda Estates — Premium Land, Plots & Homes";
   let desc = "Hyper-local real estate listings in and around Nalgonda.";
   let imageUrl = "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200";
 
-  // 2. ATTEMPT TO FETCH REAL DATA ON THE SERVER
-  // Since your app uses a client-side store (usePropertyStore), the server doesn't know about it.
-  // You must connect your actual data source here.
+  // 2. Fetch the specific property data on the server
   try {
+    // Importing your properties array from lib/properties
+    const { properties } = await import('@/lib/properties');
     
-    // 👉 OPTION A: If you have a static properties array in your lib folder:
-    // const { properties } = await import('@/lib/properties');
-    // const property = properties.find(p => p.id === id);
-
-    // 👉 OPTION B: If you have an API endpoint or database (like Firebase/Supabase):
-    // const res = await fetch(`https://nalgonda-estates.vercel.app/api/properties/${id}`);
-    // const property = await res.json();
-    
-    // Temporarily setting to null until you uncomment one of the options above
-    const property = null; 
+    // Find the specific property based on the URL parameter 'id'
+    const property = properties?.find(p => p.id === id);
 
     // If the server successfully found the property, overwrite the defaults
     if (property) {
-      title = `${property.title?.en || 'Premium Property'} | Nalgonda Estates`;
-      desc = property.description?.en || desc;
+      title = `${property.title?.en || property.title || 'Premium Property'} | Nalgonda Estates`;
+      desc = property.description?.en || property.description || desc;
       imageUrl = property.images?.[0] || imageUrl;
     }
   } catch (error) {
