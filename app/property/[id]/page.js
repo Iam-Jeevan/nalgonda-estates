@@ -1,63 +1,48 @@
 // app/property/[id]/page.js
 import PropertyClient from './PropertyClient';
 
-// 1. Hook up your server-side data source here
-async function getPropertyDataOnServer(id) {
+export async function generateMetadata({ params }) {
+  const { id } = params;
+  
+  // 1. Set default fallback values so the link never looks "broken"
+  let title = "Nalgonda Estates — Premium Land, Plots & Homes";
+  let desc = "Hyper-local real estate listings in and around Nalgonda.";
+  let imageUrl = "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200";
+
+  // 2. ATTEMPT TO FETCH REAL DATA ON THE SERVER
+  // Since your app uses a client-side store (usePropertyStore), the server doesn't know about it.
+  // You must connect your actual data source here.
   try {
-    // OPTION A: If you have an API endpoint that returns a single property, uncomment below:
+    
+    // 👉 OPTION A: If you have a static properties array in your lib folder:
+    // const { properties } = await import('@/lib/properties');
+    // const property = properties.find(p => p.id === id);
+
+    // 👉 OPTION B: If you have an API endpoint or database (like Firebase/Supabase):
     // const res = await fetch(`https://nalgonda-estates.vercel.app/api/properties/${id}`);
-    // if (res.ok) return await res.json();
+    // const property = await res.json();
+    
+    // Temporarily setting to null until you uncomment one of the options above
+    const property = null; 
 
-    // OPTION B: If your properties are imported from a static array file, you can filter it here:
-    // import { staticProperties } from '@/lib/properties';
-    // return staticProperties.find(p => p.id === id);
-
-    return null; 
+    // If the server successfully found the property, overwrite the defaults
+    if (property) {
+      title = `${property.title?.en || 'Premium Property'} | Nalgonda Estates`;
+      desc = property.description?.en || desc;
+      imageUrl = property.images?.[0] || imageUrl;
+    }
   } catch (error) {
     console.error("Error fetching property on server:", error);
-    return null;
-  }
-}
-
-export async function generateMetadata({ params }) {
-  const property = await getPropertyDataOnServer(params.id);
-
-  // SMART FALLBACK: If the server hasn't fetched the property data yet, 
-  // do not show "Property Not Found". Show your main site branding and image instead.
-  if (!property) {
-    return {
-      title: 'Nalgonda Estates — Premium Land, Plots & Homes',
-      description: 'Hyper-local real estate listings in and around Nalgonda.',
-      openGraph: {
-        title: 'Nalgonda Estates — Premium Land, Plots & Homes',
-        description: 'Hyper-local real estate listings in and around Nalgonda.',
-        url: `https://nalgonda-estates.vercel.app/property/${params.id}`,
-        siteName: 'Nalgonda Estates',
-        images: [
-          {
-            url: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200', // Your main showcase house image
-            width: 1200,
-            height: 630,
-            alt: 'Nalgonda Estates',
-          },
-        ],
-        type: 'website',
-      },
-    };
   }
 
-  // Dynamic Metadata if the server successfully finds the property
-  const title = property.title?.en || 'Premium Property';
-  const desc = property.description?.en || 'View details for this premium listing.';
-  const imageUrl = property.images?.[0] || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200';
-
+  // 3. Return the generated Open Graph Tags
   return {
-    title: `${title} | Nalgonda Estates`,
+    title: title,
     description: desc,
     openGraph: {
       title: title,
       description: desc,
-      url: `https://nalgonda-estates.vercel.app/property/${params.id}`,
+      url: `https://nalgonda-estates.vercel.app/property/${id}`,
       siteName: 'Nalgonda Estates',
       images: [
         {
@@ -73,6 +58,6 @@ export async function generateMetadata({ params }) {
 }
 
 export default function Page({ params }) {
-  // Pass control over to your client-side file which correctly handles the actual page view
+  // Pass control to your interactive client component
   return <PropertyClient params={params} />;
 }
