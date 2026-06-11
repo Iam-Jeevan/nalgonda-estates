@@ -138,7 +138,6 @@ function EnglishFieldWithAutoTranslate({
 
   return (
     <div className="space-y-2">
-      {/* Changed to flex-wrap to prevent squishing */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Label className="text-sm font-semibold text-primary">{label}</Label>
         <Button
