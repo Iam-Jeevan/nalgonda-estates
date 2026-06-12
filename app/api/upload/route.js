@@ -63,8 +63,6 @@ export async function POST(req) {
 
           // Video-specific settings
           if (isVideo) {
-            uploadOptions.video_codec = 'auto';
-            uploadOptions.audio_codec = 'auto';
             uploadOptions.eager = [
               { width: 300, height: 300, crop: 'fill', quality: 'auto' },
             ]; // Generate thumbnail
